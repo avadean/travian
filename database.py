@@ -1,5 +1,5 @@
-from tools import assertListOfObj
 from report import Report
+from tools import assertListOfObj
 
 
 class Database:

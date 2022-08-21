@@ -1,9 +1,12 @@
 from data import troops
+from dateutil.parser import parse
 from tools import assertListOfObj, getIndex
 
 
 class Report:
     def __init__(self, type_: str = None, **kwargs):
+        assert isinstance(type_, str)
+
         self.type_ = type_
 
         self.dateTime = kwargs.pop('datetime', None)
@@ -112,7 +115,7 @@ def getBasicReportData(lines: list[str], type_: str) -> dict:
 
     attVill, defVill = vills
 
-    dateAndTime = lines[index + 1]
+    dateAndTime = parse(lines[index + 1])
 
     # (2) Attacker.
     index = getIndex('ATTACKER', lines)

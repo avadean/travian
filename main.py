@@ -46,7 +46,7 @@ def analyse() -> int:
     if database is None:
         return 1
 
-    print(len(database.reports))
+    print(database)
 
     return 0
 
