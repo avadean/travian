@@ -9,6 +9,16 @@ class Report:
 
         self.type_ = type_
 
+        self.attVill = kwargs.pop('attVill', None)
+        self.attAlly = kwargs.pop('attAlly', None)
+        self.attTroops = kwargs.pop('attTroops', None)
+        self.attDeaths = kwargs.pop('attDeaths', None)
+
+        self.defVill = kwargs.pop('defVill', None)
+        self.defAlly = kwargs.pop('defAlly', None)
+        self.defTroops = kwargs.pop('defTroops', None)
+        self.defDeaths = kwargs.pop('defDeaths', None)
+
         self.dateTime = kwargs.pop('datetime', None)
 
         self.lumberBounty = kwargs.pop('lumberBounty', None)
@@ -23,6 +33,20 @@ class Report:
 
         self.rallyLvl = kwargs.pop('rallyLvl', None)
         self.wallLvl = kwargs.pop('wallLvl', None)
+
+    def __eq__(self, other):
+        return self.type_ == other.type_ \
+               and self.dateTime == other.datetime \
+               and self.lumberBounty == other.lumberBounty \
+               and self.clayBounty == other.clayBounty \
+               and self.ironBounty == other.ironBounty \
+               and self.cropBounty == other.cropBounty \
+               and self.lumberScout == other.lumberScout \
+               and self.clayScout == other.clayScout \
+               and self.ironScout == other.ironScout \
+               and self.cropScout == other.cropScout \
+               and self.rallyLvl == other.rallyLvl \
+               and self.wallLvl == other.wallLvl
 
 
 def processReport(lines: list[str]) -> Report:
@@ -135,15 +159,15 @@ def getBasicReportData(lines: list[str], type_: str) -> dict:
 
     troopNumsDef, deathNumsDef = getTroops(lines[index + 2:index + 5])
 
-    return { 'attVill': attVill,
-             'defVill': defVill,
-             'attAlly': attAlly,
-             'defAlly': defAlly,
-             'troopsAtt': troopNumsAtt,
-             'deathsAtt': deathNumsAtt,
-             'troopsDef': troopNumsDef,
-             'deathsDef': deathNumsDef,
-             'datetime': dateAndTime }
+    return {'attVill': attVill,
+            'defVill': defVill,
+            'attAlly': attAlly,
+            'defAlly': defAlly,
+            'attTroops': troopNumsAtt,
+            'attDeaths': deathNumsAtt,
+            'defTroops': troopNumsDef,
+            'defDeaths': deathNumsDef,
+            'datetime': dateAndTime}
 
 
 def getAlliance(line: str = None):

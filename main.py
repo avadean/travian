@@ -1,3 +1,5 @@
+import datetime
+
 from inout import backupProcessed, cleanLines, dumpWorld, loadWorld, getFiles, getLines, getLinesType
 from report import processReport
 from world import World
@@ -33,9 +35,9 @@ def main(worldName: str = 'testing') -> int:
     else:
         world.addReports(reports)
 
-    err = dumpWorld(world)
+    err = dumpWorld(world, worldName=world.name)
 
-    backupProcessed(processed)
+    backupProcessed(processed, worldName)
 
     return analyse(worldName)
 
@@ -46,11 +48,9 @@ def analyse(worldName: str = 'testing') -> int:
     if world is None:
         return 1
 
-    print(world)
-
     return 0
 
 
 if __name__ == '__main__':
-    raise SystemExit(main(worldName='testing'))
+    raise SystemExit(main(worldName='ts8'))
     #raise SystemExit(analyse())
