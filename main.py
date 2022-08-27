@@ -1,5 +1,3 @@
-import datetime
-
 from inout import backupProcessed, cleanLines, dumpWorld, loadWorld, getFiles, getLines, getLinesType
 from report import processReport
 from world import World
@@ -47,6 +45,8 @@ def analyse(worldName: str = 'testing') -> int:
 
     if world is None:
         return 1
+
+    # print(world.reports[0].infos[1])
 
     return 0
 

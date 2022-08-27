@@ -1,4 +1,4 @@
-from data import troops
+from data import structures, troops, Information
 from dateutil.parser import parse
 from tools import assertListOfObj, getIndex
 
@@ -34,6 +34,15 @@ class Report:
         self.rallyLvl = kwargs.pop('rallyLvl', None)
         self.wallLvl = kwargs.pop('wallLvl', None)
 
+        self.infos = kwargs.pop('infos', None)
+
+    def __str__(self):
+        string = ''
+
+        string += '{}'
+
+        return string
+
     def __eq__(self, other):
         return self.type_ == other.type_ \
                and self.dateTime == other.datetime \
@@ -64,6 +73,8 @@ def processReport(lines: list[str]) -> Report:
         kwargs['ironBounty'] = int(lines[index + 3])
         kwargs['cropBounty'] = int(lines[index + 4])
 
+        kwargs['infos'] = infos if (infos := getInfo(lines)) else None
+
     elif type_ == 'attack':
         kwargs = getBasicReportData(lines, type_)
 
@@ -73,6 +84,8 @@ def processReport(lines: list[str]) -> Report:
         kwargs['clayBounty'] = int(lines[index + 2])
         kwargs['ironBounty'] = int(lines[index + 3])
         kwargs['cropBounty'] = int(lines[index + 4])
+
+        kwargs['infos'] = infos if (infos := getInfo(lines)) else None
 
     elif type_ == 'resources':
         kwargs = getBasicReportData(lines, type_)
@@ -218,3 +231,103 @@ def getTroops(lines: list[str] = None):
     deathNums = dict(zip(troops[attTribe], [int(num) for num in deathNums if num]))
 
     return troopNums, deathNums
+
+
+def getInfo(lines: list[str] = None):
+    index = getIndex('Information', lines)
+
+    hits = []
+
+    while 'Bounty' not in (line := lines[index]) and 'DEFENDER' not in line:  # Two checks for extra safety.
+        line = line[len('Information'):].strip() if line.startswith('Information') else line
+
+        if 'destroyed' in line:
+
+            if 'village has been completely destroyed' in line:
+                # e.g The village has been completely destroyed.
+                hits.append(Information(structure='village', toLevel=0))
+
+            elif 'no building in the target village that can be destroyed by catapults' in line:
+                # e.g There is no building in the target village that can be destroyed by catapults.
+                hits.append(Information(note='No building for catapults to destroy.'))
+
+            elif 'level' in line:
+                # e.g Marketplace level 20 destroyed.
+                structure = getStructure(line)
+
+                if structure is None:
+                    print('Cannot determine structure in line \'{line}\'')
+                    continue
+
+                level = int(line[line.index('level') + len('level'):line.index('destroyed')].strip().strip('.').strip())
+
+                hits.append(Information(structure=structure, fromLevel=level, toLevel=0))
+
+            else:
+                # e.g City wall destroyed.
+                structure = getStructure(line)
+
+                if structure is None:
+                    print('Cannot determine structure in line \'{line}\'')
+                    continue
+
+                hits.append(Information(structure=structure, toLevel=0))
+
+        elif 'damaged' in line:
+
+            if 'not damaged' in line:
+                # e.g Marketplace was not damaged.
+                structure = getStructure(line)
+
+                if structure is None:
+                    print('Cannot determine structure in line \'{line}\'')
+                    continue
+
+                hits.append(Information(structure=structure))
+
+            elif 'level' in line:
+                # e.g City wall damaged from level 15 to level 8.
+                structure = getStructure(line)
+
+                if structure is None:
+                    print('Cannot determine structure in line \'{line}\'')
+                    continue
+
+                fromLevel = int(line[line.index('from level') + len('from level'):].strip().strip('.').strip().split()[0])
+                toLevel = int(line[line.index('to level') + len('to level'):].strip().strip('.').strip().split()[0])
+
+                hits.append(Information(structure=structure, fromLevel=fromLevel, toLevel=toLevel))
+
+            else:
+                print('Cannot determine Information in line \'{line}\'')
+                continue
+
+        elif 'own troops' in line:
+            # e.g You freed 146 own troops. You could save 109 own troops.
+
+            troopsFreed = int(line[line.index('You freed') + len('You freed'):].strip().strip('.').strip().split()[0])
+            couldSave = int(line[line.index('You could save') + len('You could save'):].strip().strip('.').strip().split()[0])
+
+            hits.append(Information(troopsFreed=troopsFreed, couldSave=couldSave))
+
+        elif 'Random target was selected' in line:
+            # e.g Random target was selected.
+
+            hits.append(Information(note='Random target was selected.'))
+
+        else:
+            print('Cannot determine Information in line \'{line}\'')
+            continue
+
+
+        index += 1
+
+    return hits
+
+
+def getStructure(line: str = None) -> str:
+    assert isinstance(line, str)
+
+    for structure in structures:
+        if structure.lower() in line.lower():
+            return structure
