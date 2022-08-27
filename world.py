@@ -17,3 +17,14 @@ class World:
         assertListOfObj(reports, Report)
 
         self.reports += reports
+
+    def getPlayers(self):
+        players = {report.attacker for report in self.reports}
+
+        players.update({report.defender for report in self.reports})
+
+        players = list(players)
+
+        players = sorted(players)
+
+        return players

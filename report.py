@@ -7,7 +7,7 @@ class Report:
     def __init__(self, type_: str = None, **kwargs):
         assert isinstance(type_, str)
 
-        self.type_ = type_
+        self.type = type_
 
         self.attacker = kwargs.pop('attacker', None)
         self.defender = kwargs.pop('defender', None)
@@ -40,9 +40,13 @@ class Report:
         self.infos = kwargs.pop('infos', None)
 
     def __str__(self):
-        string = ''
-
-        string += '{}'
+        string = f'{self.dateTime}\n'
+        string += f'Player {self.attacker} of village {self.attVill}\n'
+        string += f'{sum(self.attTroops.values())} troops with {sum(self.attDeaths.values())} deaths\n'
+        string += f'-- {self.type} --\n'
+        string += f'Player {self.defender} of village {self.defVill}\n'
+        string += f'{sum(self.defTroops.values())} troops with {sum(self.defDeaths.values())} deaths\n'
+        string += '\n'.join([str(i) for i in self.infos])
 
         return string
 
