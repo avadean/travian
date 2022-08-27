@@ -46,7 +46,15 @@ def analyse(worldName: str = 'testing') -> int:
     if world is None:
         return 1
 
-    # print(world.reports[0].infos[1])
+    '''
+    for report in world.reports:
+        if report.infos is not None:
+            print('')
+            print(f'{report.attacker} attacks {report.defender} {report.dateTime}')
+            for info in report.infos:
+                print(info)
+            print('============================')
+    '''
 
     return 0
 

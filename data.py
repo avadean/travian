@@ -18,6 +18,10 @@ class Information:
         self.troopsFreed = kwargs.pop('troopsFreed', None)
         self.couldSave = kwargs.pop('couldSave', None)
 
+        self.conquered = kwargs.pop('conquered', False)
+        self.fromLoyalty = kwargs.pop('fromLoyalty', False)
+        self.toLoyalty = kwargs.pop('toLoyalty', False)
+
         self.note = kwargs.pop('note', None)
 
     def __str__(self):
@@ -38,14 +42,21 @@ class Information:
             else:
                 string += 'was not damaged.'
 
-            string += '\n'
-
         elif self.troopsFreed is not None:
             string += f'Troops freed: {self.troopsFreed}'
             string += f'Could\'ve saved: {self.couldSave}'
 
+        elif self.conquered:
+            string += 'Village was conquered.'
+
+        elif self.fromLoyalty is not None and self.toLoyalty is not None:
+            string += f'Loyalty lowered from {self.fromLoyalty} to {self.toLoyalty}.'
+
         elif self.note is not None:
             string += f'{self.note}'
+
+        else:
+            print(self.__dict__)
 
         return string
 

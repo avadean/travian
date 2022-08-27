@@ -9,6 +9,9 @@ class Report:
 
         self.type_ = type_
 
+        self.attacker = kwargs.pop('attacker', None)
+        self.defender = kwargs.pop('defender', None)
+
         self.attVill = kwargs.pop('attVill', None)
         self.attAlly = kwargs.pop('attAlly', None)
         self.attTroops = kwargs.pop('attTroops', None)
@@ -68,10 +71,11 @@ def processReport(lines: list[str]) -> Report:
 
         index = getIndex('Bounty', lines)
 
-        kwargs['lumberBounty'] = int(lines[index + 1])
-        kwargs['clayBounty'] = int(lines[index + 2])
-        kwargs['ironBounty'] = int(lines[index + 3])
-        kwargs['cropBounty'] = int(lines[index + 4])
+        if index >= 0:
+            kwargs['lumberBounty'] = int(lines[index + 1])
+            kwargs['clayBounty'] = int(lines[index + 2])
+            kwargs['ironBounty'] = int(lines[index + 3])
+            kwargs['cropBounty'] = int(lines[index + 4])
 
         kwargs['infos'] = infos if (infos := getInfo(lines)) else None
 
@@ -80,10 +84,11 @@ def processReport(lines: list[str]) -> Report:
 
         index = getIndex('Bounty', lines)
 
-        kwargs['lumberBounty'] = int(lines[index + 1])
-        kwargs['clayBounty'] = int(lines[index + 2])
-        kwargs['ironBounty'] = int(lines[index + 3])
-        kwargs['cropBounty'] = int(lines[index + 4])
+        if index >= 0:
+            kwargs['lumberBounty'] = int(lines[index + 1])
+            kwargs['clayBounty'] = int(lines[index + 2])
+            kwargs['ironBounty'] = int(lines[index + 3])
+            kwargs['cropBounty'] = int(lines[index + 4])
 
         kwargs['infos'] = infos if (infos := getInfo(lines)) else None
 
@@ -152,27 +157,36 @@ def getBasicReportData(lines: list[str], type_: str) -> dict:
 
     attVill, defVill = vills
 
+    attVill = attVill.strip()
+    defVill = defVill.strip()
+
     dateAndTime = parse(lines[index + 1])
 
     # (2) Attacker.
     index = getIndex('ATTACKER', lines)
 
+    attacker = getPlayer(lines[index + 1])
+
     attAlly = getAlliance(lines[index + 1])
 
-    attAlly = None if not attAlly else attAlly
+    attAlly = None if not attAlly else attAlly.strip()
 
     troopNumsAtt, deathNumsAtt = getTroops(lines[index + 2:index + 5])
 
     # (3) Defender.
     index = getIndex('DEFENDER', lines)
 
+    defender = getPlayer(lines[index + 1])
+
     defAlly = getAlliance(lines[index + 1])
 
-    defAlly = None if not defAlly else defAlly
+    defAlly = None if not defAlly else defAlly.strip()
 
     troopNumsDef, deathNumsDef = getTroops(lines[index + 2:index + 5])
 
-    return {'attVill': attVill,
+    return {'attacker': attacker,
+            'defender': defender,
+            'attVill': attVill,
             'defVill': defVill,
             'attAlly': attAlly,
             'defAlly': defAlly,
@@ -181,6 +195,33 @@ def getBasicReportData(lines: list[str], type_: str) -> dict:
             'defTroops': troopNumsDef,
             'defDeaths': deathNumsDef,
             'datetime': dateAndTime}
+
+
+def getPlayer(line: str = None):
+    assert isinstance(line, str)
+
+    # '[IA-Rh] ava from village 00 Air' ---> ('[IA-Rh] ava', '00 Air')
+    info = line.split('from village')
+
+    assert len(info) == 2, 'Error when parsing file #3.'
+
+    # ('[IA-Rh] ava', '00 Air') ---> '[IA-Rh] ava'
+    info = info[0]
+
+    assert info.startswith('['), 'Error when parsing file #4.'
+
+    # '[IA-Rh] ava' ---> 'IA-Rh] ava'
+    info = info[1:]
+
+    try:
+        index = info.index(']')
+    except ValueError:
+        raise ValueError('Error when parsing file #5.')
+
+    # 'IA-Rh] ava' ---> 'ava'
+    player = info[index + 1:].strip()
+
+    return player
 
 
 def getAlliance(line: str = None):
@@ -234,9 +275,12 @@ def getTroops(lines: list[str] = None):
 
 
 def getInfo(lines: list[str] = None):
+    hits = []
+
     index = getIndex('Information', lines)
 
-    hits = []
+    if index < 0:
+        return hits
 
     while 'Bounty' not in (line := lines[index]) and 'DEFENDER' not in line:  # Two checks for extra safety.
         line = line[len('Information'):].strip() if line.startswith('Information') else line
@@ -245,19 +289,21 @@ def getInfo(lines: list[str] = None):
 
             if 'village has been completely destroyed' in line:
                 # e.g The village has been completely destroyed.
+
                 hits.append(Information(structure='village', toLevel=0))
 
             elif 'no building in the target village that can be destroyed by catapults' in line:
                 # e.g There is no building in the target village that can be destroyed by catapults.
+
                 hits.append(Information(note='No building for catapults to destroy.'))
 
             elif 'level' in line:
                 # e.g Marketplace level 20 destroyed.
+
                 structure = getStructure(line)
 
                 if structure is None:
-                    print('Cannot determine structure in line \'{line}\'')
-                    continue
+                    print(f'Cannot determine structure in line \'{line}\'')
 
                 level = int(line[line.index('level') + len('level'):line.index('destroyed')].strip().strip('.').strip())
 
@@ -265,11 +311,11 @@ def getInfo(lines: list[str] = None):
 
             else:
                 # e.g City wall destroyed.
+
                 structure = getStructure(line)
 
                 if structure is None:
-                    print('Cannot determine structure in line \'{line}\'')
-                    continue
+                    print(f'Cannot determine structure in line \'{line}\'')
 
                 hits.append(Information(structure=structure, toLevel=0))
 
@@ -277,21 +323,21 @@ def getInfo(lines: list[str] = None):
 
             if 'not damaged' in line:
                 # e.g Marketplace was not damaged.
+
                 structure = getStructure(line)
 
                 if structure is None:
-                    print('Cannot determine structure in line \'{line}\'')
-                    continue
+                    print(f'Cannot determine structure in line \'{line}\'')
 
                 hits.append(Information(structure=structure))
 
             elif 'level' in line:
                 # e.g City wall damaged from level 15 to level 8.
+
                 structure = getStructure(line)
 
                 if structure is None:
-                    print('Cannot determine structure in line \'{line}\'')
-                    continue
+                    print(f'Cannot determine structure in line \'{line}\'')
 
                 fromLevel = int(line[line.index('from level') + len('from level'):].strip().strip('.').strip().split()[0])
                 toLevel = int(line[line.index('to level') + len('to level'):].strip().strip('.').strip().split()[0])
@@ -299,8 +345,7 @@ def getInfo(lines: list[str] = None):
                 hits.append(Information(structure=structure, fromLevel=fromLevel, toLevel=toLevel))
 
             else:
-                print('Cannot determine Information in line \'{line}\'')
-                continue
+                print(f'Cannot determine Information in line \'{line}\'')
 
         elif 'own troops' in line:
             # e.g You freed 146 own troops. You could save 109 own troops.
@@ -315,9 +360,21 @@ def getInfo(lines: list[str] = None):
 
             hits.append(Information(note='Random target was selected.'))
 
+        elif 'Loyalty lowered' in line:
+            # e.g Loyalty lowered from 14 to 0.
+
+            fromLoyalty = int(line[line.index('from') + len('from'):].strip().strip('.').strip().split()[0])
+            toLoyalty = int(line[line.index('to') + len('to'):].strip().strip('.').strip().split()[0])
+
+            hits.append(Information(fromLoyalty=fromLoyalty, toLoyalty=toLoyalty))
+
+        elif 'decided to join your empire' in line:
+            # The inhabitants of 03. Dantooine decided to join your empire.
+
+            hits.append(Information(conquered=True))
+
         else:
-            print('Cannot determine Information in line \'{line}\'')
-            continue
+            print(f'Cannot determine Information in line \'{line}\'')
 
 
         index += 1
