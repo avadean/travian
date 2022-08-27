@@ -2,10 +2,12 @@ from report import Report
 from tools import assertListOfObj
 
 
-class Database:
-    def __init__(self, reports: list[Report] = None):
+class World:
+    def __init__(self, name: str = None, reports: list[Report] = None):
+        assert isinstance(name, str)
         assertListOfObj(reports, Report)
 
+        self.name = name
         self.reports = reports
 
     def __str__(self):

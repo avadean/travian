@@ -6,41 +6,48 @@ from tools import assertListOfObj, getIndex
 
 
 DATABASE_DIR = 'database/'
-DATABASE_BACKUP_DIR = f'{DATABASE_DIR}backups/'
-DATABASE_FILE = 'database.bin'
-DATABASE_FULL_FILE = f'{DATABASE_DIR}{DATABASE_FILE}'
+
+WORLD_FILE = 'current.bin'
 
 FILE_DIR = "files/"
 FILE_BACKUP_DIR = f'{FILE_DIR}backups/'
 
 
-def loadDatabase():
-    if Path(DATABASE_FULL_FILE).exists():
-        with open(DATABASE_FULL_FILE, 'rb') as f:
-            database = pickleLoad(f)
+def loadWorld(worldName: str = None):
+    assert isinstance(worldName, str)
 
-        return database
+    if Path(saveFile := f'{DATABASE_DIR}{worldName}/{WORLD_FILE}').exists():
+
+        with open(saveFile, 'rb') as f:
+            world = pickleLoad(f)
+
+        return world
 
     return None
 
 
-def dumpDatabase(database):
-    if Path(DATABASE_FULL_FILE).exists():
-        Path(DATABASE_BACKUP_DIR).mkdir(parents=True, exist_ok=True)
+def dumpWorld(world):
+    try:
+        assert isinstance(world.name, str)
+    except AttributeError:
+        raise AttributeError('World does not have the name attribute.')
 
-        newFileName = f'{DATABASE_BACKUP_DIR}{datetime.now().strftime("%Y%m%d%H%M%S%f")}{DATABASE_FILE}'
+    save = f'{DATABASE_DIR}{world.name}/{WORLD_FILE}'
+
+    if Path(save).exists():
+        newName = f'{DATABASE_DIR}{world.name}/{datetime.now().strftime("%Y%m%d%H%M%S%f")}.bin'
 
         i = 0
-        while Path(newFileName).exists():
-            newFileName = f'{DATABASE_BACKUP_DIR}{datetime.now().strftime("%Y%m%d%H%M%S%f")}_{i}{DATABASE_FILE}'
+        while Path(newName).exists():
+            newName = f'{DATABASE_DIR}{world.name}/{datetime.now().strftime("%Y%m%d%H%M%S%f")}_{i}.bin'
             i += 1
 
-        Path(DATABASE_FULL_FILE).rename(newFileName)
+        Path(save).rename(newName)
 
-    Path(DATABASE_DIR).mkdir(parents=True, exist_ok=True)
+    Path(f'{DATABASE_DIR}{world.name}').mkdir(parents=True, exist_ok=True)
 
-    with open(DATABASE_FULL_FILE, 'wb') as f:
-        pickleDump(database, f)
+    with open(save, 'wb') as saveFile:
+        pickleDump(world, saveFile)
 
 
 def backupProcessed(processed: list[Path]) -> None:

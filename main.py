@@ -1,9 +1,9 @@
-from inout import backupProcessed, cleanLines, dumpDatabase, loadDatabase, getFiles, getLines, getLinesType
-from database import Database
+from inout import backupProcessed, cleanLines, dumpWorld, loadWorld, getFiles, getLines, getLinesType
 from report import processReport
+from world import World
 
 
-def main() -> int:
+def main(worldName: str = 'testing') -> int:
     files = getFiles()
 
     reports = []
@@ -26,31 +26,31 @@ def main() -> int:
 
         processed.append(file)
 
-    database = loadDatabase()
+    world = loadWorld(worldName)
 
-    if database is None:
-        database = Database(reports=reports)
+    if world is None:
+        world = World(name=worldName, reports=reports)
     else:
-        database.addReports(reports)
+        world.addReports(reports)
 
-    dumpDatabase(database)
+    err = dumpWorld(world)
 
     backupProcessed(processed)
 
-    return analyse()
+    return analyse(worldName)
 
 
-def analyse() -> int:
-    database: Database = loadDatabase()
+def analyse(worldName: str = 'testing') -> int:
+    world: World = loadWorld(worldName)
 
-    if database is None:
+    if world is None:
         return 1
 
-    print(database)
+    print(world)
 
     return 0
 
 
 if __name__ == '__main__':
-    raise SystemExit(main())
+    raise SystemExit(main(worldName='testing'))
     #raise SystemExit(analyse())
