@@ -51,7 +51,7 @@ class Report:
         return string
 
     def __eq__(self, other):
-        return self.type_ == other.type_ \
+        return self.type == other.type \
                and self.dateTime == other.datetime \
                and self.lumberBounty == other.lumberBounty \
                and self.clayBounty == other.clayBounty \
@@ -225,7 +225,7 @@ def getPlayer(line: str = None):
     # 'IA-Rh] ava' ---> 'ava'
     player = info[index + 1:].strip()
 
-    return player
+    return player or None
 
 
 def getAlliance(line: str = None):
@@ -251,7 +251,7 @@ def getAlliance(line: str = None):
 
     alliance = info[:index].strip()
 
-    return alliance
+    return alliance or None
 
 
 def getTroops(lines: list[str] = None):
